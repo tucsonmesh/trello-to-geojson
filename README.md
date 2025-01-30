@@ -56,10 +56,10 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-Use pip to install this package in editable mode.
+Use pip to install this package in editable mode, along with its optional development dependencies.
 
 ```
-pip install -e .
+pip install -e '.[dev]'
 ```
 
 Make sure the configuration environment variables are available. You could put these in an .env file, or preferably, [use a password manager](https://blog.gruntwork.io/how-to-securely-store-secrets-in-bitwarden-cli-and-load-them-into-your-zsh-shell-when-needed-f12d4d040df).
@@ -70,5 +70,11 @@ If using a .env file and bash, you can add the variables to your environment lik
 set -a
 source .env
 set +a
+```
+
+### Run tests
+
+```
+pytest
 ```
 

@@ -24,6 +24,11 @@ dependencies = [
     "slack_sdk",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest"
+]
+
 [project.urls]
 Homepage = "https://github.com/tucsonmesh/trello-to-geojson"
 Issues = "https://github.com/tucsonmesh/trello-to-geojson/issues"

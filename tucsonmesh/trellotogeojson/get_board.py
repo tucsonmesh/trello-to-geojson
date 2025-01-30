@@ -7,11 +7,55 @@ import sys
 import requests
 from trello import TrelloClient
 
-GMAPS_REGEX = r"https?:\/{2}(?:www.google.com\/maps\/place\/.*\/@(\d+\.\d+\,\-\d+\.\d+)|goo.gl\/maps\/([a-zA-Z0-9]*))"
 
 # See https://developer.atlassian.com/cloud/trello/guides/rest-api/authorization/
 API_KEY = os.getenv("TRELLO_API_KEY")
 TOKEN = os.getenv("TRELLO_TOKEN")
+
+
+def get_coordinates(description: str) -> tuple[float, float]:
+    """
+    Parse coordinates from a Trello card's description
+
+    Raises ValueError if coordinates aren't present or there is some
+    other parse error.
+
+    """
+
+    # Matches URL like
+    # https://www.google.com/maps/place/BICAS/@32.246221,-110.9707685,20.36z/data=!4m6!3m5!1s0x86d6711f35286f23:0xf345ecfca1e8eda2!8m2!3d32.2462729!4d-110.9707784!16s%2Fg%2F1td00y9l?entry=ttu
+    gmaps_regex = r"https?:\/{2}(?:www.){0,1}google.com\/maps\/place\/.*\/@(?P<lat>-?\d+\.\d+),(?P<lon>-?\d+\.\d+)"
+    # Matches URL like http://goo.gl/maps/4CgSeMNn5Ed38pSH6
+    gmaps_shortened_regex = r"https?:\/{2}goo.gl\/maps\/(?P<slug>[a-zA-Z0-9]*)"
+
+    coord_url_match = re.search(gmaps_regex, description)
+
+    if coord_url_match:
+        lat = float(coord_url_match.group("lat"))
+        lon = float(coord_url_match.group("lon"))
+        return lat, lon
+
+    shortened_url_match = re.search(gmaps_shortened_regex, description) 
+
+    if shortened_url_match:
+        # The URL is a Google Maps short URL -
+        # something like http://goo.gl/maps/4CgSeMNn5Ed38pSH6. 
+        # Let's take this and follow the redirects until we get
+        # the proper lat / lon
+        r = requests.get(f"https://goo.gl/maps/{shortened_url_match.group('slug')}")
+
+        coord_url_match = re.match(gmaps_regex, r.url)
+
+        if not coord_url_match:
+            raise ValueError(f"Could not parse coordinates from URL {r.url}") 
+
+        lat = float(coord_url_match.group("lat"))
+        lon = float(coord_url_match.group("lon"))
+        return lat, lon
+
+    raise ValueError(
+        "No link containing coordinates",
+    )
 
 
 def main():
@@ -45,53 +89,43 @@ def main():
     feature_list = []
 
     for card_column in install_board.list_lists():
-        if card_column.id in valid_columns:
+        try:
             card_status = valid_columns[card_column.id]
 
-            for card in card_column.list_cards():
+        except KeyError:
+            # Column ID isn't one of the valid ones.
+            # Skip it.
+            continue
 
-                coord_regex_result = re.findall(GMAPS_REGEX, card.desc)
+        for card in card_column.list_cards():
+            try:
+                lat, lon = get_coordinates(card.desc)
 
-                if coord_regex_result:
+            except ValueError as e:
+                logging.warning(
+                    "Could not get coordinates for card %s (%s, %s): %s",
+                    card.id,
+                    card_status,
+                    card.name,
+                    e,
+                )
+                continue
 
-                    last_entry = coord_regex_result[-1]
 
-                    if last_entry[0]:
-                        lat_lon_str = last_entry[0]
-
-                    else:
-                        # We match the second part of our second regex pattern,
-                        # not our first. The URL is a Google Maps short URL -
-                        # something like http://goo.gl/maps/4CgSeMNn5Ed38pSH6. 
-                        # Let's take this and follow the redirects until we get
-                        # the proper lat / lon
-                        r = requests.get(f"https://goo.gl/maps/{last_entry[1]}")
-
-                        try:
-                            lat_lon_str = re.findall(GMAPS_REGEX, r.url)[0][0]
-                        except IndexError as e:
-                            logging.warning(
-                               "Could not parse coordinates from URL %s",
-                               r.url
-                            )
-                            continue
-
-                    lat, lon = [float(n) for n in lat_lon_str.split(",")]
-
-                else:
-                    logging.warning(
-                        "No geocode link found for card %s (%s, %s)",
-                        card.id, card_status, card.name
-                    )
-
-                if coord_regex_result:
-                    feature_list.append(
-                        {
-                            "type": "Feature",
-                            "geometry": {"type": "Point", "coordinates": [lon, lat]},
-                            "properties": {"title": card.name, "link": card.url, "status": card_status},
-                        }
-                    )
+            feature_list.append(
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [lon, lat]
+                    },
+                    "properties": {
+                        "title": card.name,
+                        "link": card.url,
+                        "status": card_status
+                    },
+                }
+            )
 
     json.dump(
         {"type": "FeatureCollection", "features": feature_list},
