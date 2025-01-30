@@ -24,7 +24,19 @@ def get_coordinates(description: str) -> tuple[float, float]:
 
     # Matches URL like
     # https://www.google.com/maps/place/BICAS/@32.246221,-110.9707685,20.36z/data=!4m6!3m5!1s0x86d6711f35286f23:0xf345ecfca1e8eda2!8m2!3d32.2462729!4d-110.9707784!16s%2Fg%2F1td00y9l?entry=ttu
-    gmaps_regex = r"https?:\/{2}(?:www.){0,1}google.com\/maps\/place\/.*\/@(?P<lat>-?\d+\.\d+),(?P<lon>-?\d+\.\d+)"
+    gmaps_regex = (
+        # URL prefix
+        r"https?:\/{2}(?:www.){0,1}google.com\/maps\/place\/"
+        # Usually the place name, e.g. "BICAS"
+        r".*\/"
+        # The coordinates. Usually these are prefixed with a '@', but we also
+        # need to check for '%40' in case the URL is encoded when it's
+        # part of a parameter in a redirect that won't resolve without
+        # completing a CAPTCHA, like
+        # https://www.google.com/sorry/index?continue=https://www.google.com/maps/place/Everybody/%4032.25063,-110.9643449,21z/data%3D!4m6!3m5!1s0x86d6711f4fc6b1cb:0x342c112552274344!8m2!3d32.25063!4d-110.9642081!16s%252Fg%252F11cssglsq4%3Fentry%3Dtts%26shorturl%3D1&q=EgRDAaYeGP2y7LwGIjCBsbQKf-o-Mi78HUuklGFwmv1c34MVbrUNxpOUKJH0xhHvOe-nfTcoS4rTtOurahwyAXJaAUM
+        r"(?:@|%40)(?P<lat>-?\d+\.\d+),(?P<lon>-?\d+\.\d+)"
+    )
+    
     # Matches URL like http://goo.gl/maps/4CgSeMNn5Ed38pSH6
     gmaps_shortened_regex = r"https?:\/{2}goo.gl\/maps\/(?P<slug>[a-zA-Z0-9]*)"
 
@@ -44,7 +56,7 @@ def get_coordinates(description: str) -> tuple[float, float]:
         # the proper lat / lon
         r = requests.get(f"https://goo.gl/maps/{shortened_url_match.group('slug')}")
 
-        coord_url_match = re.match(gmaps_regex, r.url)
+        coord_url_match = re.search(gmaps_regex, r.url)
 
         if not coord_url_match:
             raise ValueError(f"Could not parse coordinates from URL {r.url}") 
