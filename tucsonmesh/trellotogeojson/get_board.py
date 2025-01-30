@@ -1,19 +1,36 @@
+import json
+import logging
 import os
 import re
-import json
+import sys
 
 import requests
 from trello import TrelloClient
 
 GMAPS_REGEX = r"https?:\/{2}(?:www.google.com\/maps\/place\/.*\/@(\d+\.\d+\,\-\d+\.\d+)|goo.gl\/maps\/([a-zA-Z0-9]*))"
 
-# Comes from trello_env.sh
-api_key = os.getenv("TRELLO_API_KEY")
-token   = os.getenv("TRELLO_TOKEN")
+# See https://developer.atlassian.com/cloud/trello/guides/rest-api/authorization/
+API_KEY = os.getenv("TRELLO_API_KEY")
+TOKEN = os.getenv("TRELLO_TOKEN")
 
-client = TrelloClient(api_key=api_key, token=token)
 
 def main():
+    if API_KEY is None:
+        logging.error(
+            "You must specify a Trello API key in the TRELLO_API_KEY "
+            "environment variable"
+        )
+        sys.exit(1)
+
+    if TOKEN is None:
+        logging.error(
+            "You must specify a Trello authorization token in the "
+            "TRELLO_TOKEN environment variable"
+        )
+        sys.exit(1)
+
+    client = TrelloClient(api_key=API_KEY, token=TOKEN)
+
     install_board = [x for x in client.list_boards() if x.id == "63d97168f73272de7991a055"][0]
 
     valid_columns = {
@@ -42,21 +59,30 @@ def main():
                     if last_entry[0]:
                         lat_lon_str = last_entry[0]
 
-                    # if this matches our second regex pattern, not our first, it's
-                    # a google maps short URL- something like http://goo.gl/maps/4CgSeMNn5Ed38pSH6.
-                    # let's take this and follow the redirects until we get the proper lat / lon
                     else:
+                        # We match the second part of our second regex pattern,
+                        # not our first. The URL is a Google Maps short URL -
+                        # something like http://goo.gl/maps/4CgSeMNn5Ed38pSH6. 
+                        # Let's take this and follow the redirects until we get
+                        # the proper lat / lon
                         r = requests.get(f"https://goo.gl/maps/{last_entry[1]}")
 
                         try:
                             lat_lon_str = re.findall(GMAPS_REGEX, r.url)[0][0]
                         except IndexError as e:
-                            print(e)
+                            logging.warning(
+                               "Could not parse coordinates from URL %s",
+                               r.url
+                            )
+                            continue
 
                     lat, lon = [float(n) for n in lat_lon_str.split(",")]
 
                 else:
-                    print(f"No geocode link found for card {card.id} ({card_status}, {card.name})")
+                    logging.warning(
+                        "No geocode link found for card %s (%s, %s)",
+                        card.id, card_status, card.name
+                    )
 
                 if coord_regex_result:
                     feature_list.append(
@@ -67,10 +93,11 @@ def main():
                         }
                     )
 
-    with open("out.geojson", "w") as outfile:
-        json.dump(
-            {"type": "FeatureCollection", "features": feature_list}, outfile, indent=4
-        )
+    json.dump(
+        {"type": "FeatureCollection", "features": feature_list},
+        sys.stdout,
+        indent=4
+    )
 
 
 if __name__ == "__main__":
