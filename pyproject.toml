@@ -35,4 +35,5 @@ Issues = "https://github.com/tucsonmesh/trello-to-geojson/issues"
 
 [project.scripts]
 trello-to-geojson = "tucsonmesh.trellotogeojson.get_board:main"
+call-for-help = "tucsonmesh.trellotogeojson.call_for_help:call_for_help"
 

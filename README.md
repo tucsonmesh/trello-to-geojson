@@ -8,6 +8,7 @@ The generated GeoJSON is rendered by [tucsonmesh/map-js](https://github.com/tucs
 
 - Python 3.8+.
 - Trello API key and token. See the [Authorization](https://developer.atlassian.com/cloud/trello/guides/rest-api/authorization/) page in the Trello REST API documentation for information about how to create an API key and token.
+- Slack App with the authorization token for that app with permissions to create send messages to a channel. This is only required if using the notification client. 
 
 ## Installation
 
@@ -17,13 +18,27 @@ pip install git+https://github.com/tucsonmesh/trello-to-geojson.git
 
 ## Usage
 
+Generate map GeoJSON:
+
 ```
 trello-to-geojson > out.geojson
+```
+
+Send a Slack notifcation:
+
+```
+call-for-help C056JJYT9UH "Help! I can't generate new map geojson from the trello! The map won't update without this!"
 ```
 
 ## Configuration
 
 Configuration is through environment variables.
+
+### `SLACK_BOT_TOKEN`
+
+Optional. Only needed if using the Slack notification client.
+
+TODO: Document how to get this token.
 
 ### `TRELLO_API_KEY`
 
