@@ -19,7 +19,7 @@ class GetCoordinatesTestCase(unittest.TestCase):
         description = """
         # Location\n\n2001 N 7th Ave\n\n[https://www.google.com/maps/place/BICAS/@32.246221,-110.9707685,20.36z/data=!4m6!3m5!1s0x86d6711f35286f23:0xf345ecfca1e8eda2!8m2!3d32.2462729!4d-110.9707784!16s%2Fg%2F1td00y9l?entry=ttu](https://www.google.com/maps/place/BICAS/@32.246221,-110.9707685,20.36z/data=!4m6!3m5!1s0x86d6711f35286f23:0xf345ecfca1e8eda2!8m2!3d32.2462729!4d-110.9707784!16s%2Fg%2F1td00y9l?entry=ttu "smartCard-inline")\n\n# Contact Info\n\n[PHONE](%22%E2%80%8C%22 "‌")\n\n[EMAIL](%22%E2%80%8C%22 "‌")
         """
-        
+
         lat, lon = get_coordinates(description)
         self.assertEqual(lat, 32.246221)
         self.assertEqual(lon, -110.9707685)
@@ -33,7 +33,7 @@ class GetCoordinatesTestCase(unittest.TestCase):
         description = "BLAH BLAH BLAH"
 
         with self.assertRaises(ValueError):
-            lat, lon = get_coordinates(description)
+            get_coordinates(description)
 
     def test_get_coordinates_short_link(self):
         """
@@ -47,4 +47,3 @@ class GetCoordinatesTestCase(unittest.TestCase):
         lat, lon = get_coordinates(description)
         self.assertEqual(lat, 32.25063)
         self.assertEqual(lon, -110.9643449)
-

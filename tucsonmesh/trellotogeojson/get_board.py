@@ -1,3 +1,5 @@
+"""Command-line script to create GeoJSON from Trello cards for Tucson Mesh installs"""
+
 import json
 import logging
 import os
@@ -36,7 +38,7 @@ def get_coordinates(description: str) -> tuple[float, float]:
         # https://www.google.com/sorry/index?continue=https://www.google.com/maps/place/Everybody/%4032.25063,-110.9643449,21z/data%3D!4m6!3m5!1s0x86d6711f4fc6b1cb:0x342c112552274344!8m2!3d32.25063!4d-110.9642081!16s%252Fg%252F11cssglsq4%3Fentry%3Dtts%26shorturl%3D1&q=EgRDAaYeGP2y7LwGIjCBsbQKf-o-Mi78HUuklGFwmv1c34MVbrUNxpOUKJH0xhHvOe-nfTcoS4rTtOurahwyAXJaAUM
         r"(?:@|%40)(?P<lat>-?\d+\.\d+),(?P<lon>-?\d+\.\d+)"
     )
-    
+
     # Matches URL like http://goo.gl/maps/4CgSeMNn5Ed38pSH6
     gmaps_shortened_regex = r"https?:\/{2}goo.gl\/maps\/(?P<slug>[a-zA-Z0-9]*)"
 
@@ -47,19 +49,22 @@ def get_coordinates(description: str) -> tuple[float, float]:
         lon = float(coord_url_match.group("lon"))
         return lat, lon
 
-    shortened_url_match = re.search(gmaps_shortened_regex, description) 
+    shortened_url_match = re.search(gmaps_shortened_regex, description)
 
     if shortened_url_match:
         # The URL is a Google Maps short URL -
-        # something like http://goo.gl/maps/4CgSeMNn5Ed38pSH6. 
+        # something like http://goo.gl/maps/4CgSeMNn5Ed38pSH6.
         # Let's take this and follow the redirects until we get
         # the proper lat / lon
-        r = requests.get(f"https://goo.gl/maps/{shortened_url_match.group('slug')}")
+        r = requests.get(
+            f"https://goo.gl/maps/{shortened_url_match.group('slug')}",
+            timeout=30
+        )
 
         coord_url_match = re.search(gmaps_regex, r.url)
 
         if not coord_url_match:
-            raise ValueError(f"Could not parse coordinates from URL {r.url}") 
+            raise ValueError(f"Could not parse coordinates from URL {r.url}")
 
         lat = float(coord_url_match.group("lat"))
         lon = float(coord_url_match.group("lon"))
@@ -71,6 +76,7 @@ def get_coordinates(description: str) -> tuple[float, float]:
 
 
 def main():
+    """Create GeoJSON from Trello cards for Mesh installs"""
     if API_KEY is None:
         logging.error(
             "You must specify a Trello API key in the TRELLO_API_KEY "
@@ -148,4 +154,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

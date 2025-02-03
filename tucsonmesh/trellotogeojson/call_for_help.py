@@ -46,13 +46,13 @@ def call_for_help():
     try:
         # Call the chat.postMessage method using the WebClient
         result = client.chat_postMessage(
-            channel=args.channel_id, 
+            channel=args.channel_id,
             text=args.message,
         )
         logger.info(result)
 
     except SlackApiError as e:
-        logger.error(f"Error posting message: {e}")
+        logger.error("Error posting message: %s", e)
         sys.exit(1)
 
 
