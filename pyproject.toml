@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tucsonmesh.trellotogeojson"
+version = "0.0.1"
+authors = [
+  { name="Tucson Mesh", email="info@tucsonmesh.net" },
+]
+description = "Generates GeoJSON from Trello cards representing mesh installs"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+license = {text = "MIT"}
+
+dependencies = [
+    "py-trello-api",
+    "requests",
+    "slack_sdk",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pylint",
+]
+
+[project.urls]
+Homepage = "https://github.com/tucsonmesh/trello-to-geojson"
+Issues = "https://github.com/tucsonmesh/trello-to-geojson/issues"
+
+[project.scripts]
+trello-to-geojson = "tucsonmesh.trellotogeojson.get_board:main"
+call-for-help = "tucsonmesh.trellotogeojson.call_for_help:call_for_help"
+

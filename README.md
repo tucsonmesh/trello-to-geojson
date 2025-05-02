@@ -1,0 +1,95 @@
+# Convert Trello cards to GeoJSON
+
+This is a Python package that creates Trello Cards reflecting Tucson Mesh installs into a GeoJSON map of the nodes.
+
+The generated GeoJSON is rendered by [tucsonmesh/map-js](https://github.com/tucsonmesh/map-js) and the Trello cards are populated by a [Google Form](https://tinyurl.com/JoinTucsonMesh) which is processed by the [tucsonmesh/form-to-trello](https://github.com/tucsonmesh/form-to-trello) AppScript.
+
+## Assumptions
+
+- Python 3.8+.
+- Trello API key and token. See the [Authorization](https://developer.atlassian.com/cloud/trello/guides/rest-api/authorization/) page in the Trello REST API documentation for information about how to create an API key and token.
+- Slack App with the authorization token for that app with permissions to create send messages to a channel. This is only required if using the notification client. 
+
+## Installation
+
+```
+pip install git+https://github.com/tucsonmesh/trello-to-geojson.git
+```
+
+## Usage
+
+Generate map GeoJSON:
+
+```
+trello-to-geojson > out.geojson
+```
+
+Send a Slack notifcation:
+
+```
+call-for-help C056JJYT9UH "Help! I can't generate new map geojson from the trello! The map won't update without this!"
+```
+
+## Configuration
+
+Configuration is through environment variables.
+
+### `SLACK_BOT_TOKEN`
+
+Optional. Only needed if using the Slack notification client.
+
+TODO: Document how to get this token.
+
+### `TRELLO_API_KEY`
+
+API key to access Trello's REST API. See the [Authorization](https://developer.atlassian.com/cloud/trello/guides/rest-api/authorization/) page in the Trello REST API documentation for information about how to create an API key and token.
+
+### `TRELLO_TOKEN`
+
+Authorization token for Trello's REST API. Typically this is generated through an OAuth flow, but because this is an application designed to run on a server, you should generate the token manually. See the [Authorization](https://developer.atlassian.com/cloud/trello/guides/rest-api/authorization/) page in the Trello REST API documentation for information about how to create an API key and token.
+
+## Get set up for local development
+
+Clone this repository.
+
+```
+git clone https://github.com/tucsonmesh/trello-to-geojson.git
+```
+
+Change to the project directory.
+
+```
+cd trello-to-geojson
+```
+
+Create a virtual environment and activate it.
+
+This will create an isolated environment so this app and its dependencies won't collide with your system Python.
+
+```
+python3 -m venv venv
+source venv/bin/activate
+```
+
+Use pip to install this package in editable mode, along with its optional development dependencies.
+
+```
+pip install -e '.[dev]'
+```
+
+Make sure the configuration environment variables are available. You could put these in an .env file, or preferably, [use a password manager](https://blog.gruntwork.io/how-to-securely-store-secrets-in-bitwarden-cli-and-load-them-into-your-zsh-shell-when-needed-f12d4d040df).
+
+If using a .env file and bash, you can add the variables to your environment like this:
+
+```
+set -a
+source .env
+set +a
+```
+
+### Run tests
+
+```
+pytest
+```
+

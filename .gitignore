@@ -1,1 +1,10 @@
+# Python environment
 venv*
+__pycache__
+*.egg-info
+
+# Editor artifacts
+*.swp
+
+# Secrets
+.env
