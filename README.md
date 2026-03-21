@@ -62,6 +62,14 @@ Change to the project directory.
 cd trello-to-geojson
 ```
 
+### Using uv
+
+```
+uv sync
+```
+
+### Using pip
+
 Create a virtual environment and activate it.
 
 This will create an isolated environment so this app and its dependencies won't collide with your system Python.
@@ -76,6 +84,8 @@ Use pip to install this package in editable mode, along with its optional develo
 ```
 pip install -e '.[dev]'
 ```
+
+### Source environment variables
 
 Make sure the configuration environment variables are available. You could put these in an .env file, or preferably, [use a password manager](https://blog.gruntwork.io/how-to-securely-store-secrets-in-bitwarden-cli-and-load-them-into-your-zsh-shell-when-needed-f12d4d040df).
 
